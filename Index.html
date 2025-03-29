@@ -3,72 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI OS Monitor</title>
+    <title>AI-Based OS Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
+            background-color: #f0f5ff;
             text-align: center;
-            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
         }
-        h1 {
-            color: #333;
-        }
+
         .container {
-            max-width: 500px;
+            width: 80%;
             margin: auto;
-            background: white;
-            padding: 20px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
+            padding-top: 20px;
         }
-        .status {
-            margin: 10px 0;
-            padding: 10px;
-            font-size: 18px;
+
+        .main-heading {
+            font-size: 32px;
             font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #003366;
         }
-        .cpu { color: red; }
-        .memory { color: blue; }
-        .disk { color: green; }
-        button {
-            padding: 10px 15px;
-            font-size: 16px;
-            border: none;
-            background-color: #007bff;
-            color: white;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        button:hover {
-            background-color: #0056b3;
+
+        canvas {
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin-top: 10px;
+            padding: 10px;
         }
     </style>
 </head>
 <body>
-
-    <h1>AI-Based OS Monitor</h1>
     <div class="container">
-        <div class="status cpu">CPU Usage: <span id="cpu">Loading...</span>%</div>
-        <div class="status memory">Memory Usage: <span id="memory">Loading...</span>%</div>
-        <div class="status disk">Disk Usage: <span id="disk">Loading...</span>%</div>
-        <button onclick="fetchStats()">Refresh</button>
+        <h1 class="main-heading">AI-Based OS Monitor</h1>
+        <canvas id="memoryChart"></canvas>
+        <canvas id="diskChart"></canvas>
+        <canvas id="networkChart"></canvas>
     </div>
 
     <script>
-        function fetchStats() {
-            fetch("http://127.0.0.1:5000/stats")  // Make sure Flask backend is running
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById("cpu").textContent = data.cpu;
-                    document.getElementById("memory").textContent = data.memory.percent;
-                    document.getElementById("disk").textContent = data.disk.percent;
-                })
-                .catch(error => console.error("Error fetching stats:", error));
+        const memoryCtx = document.getElementById('memoryChart').getContext('2d');
+        const diskCtx = document.getElementById('diskChart').getContext('2d');
+        const networkCtx = document.getElementById('networkChart').getContext('2d');
+
+        const memoryChart = new Chart(memoryCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Memory Usage (%)',
+                    borderColor: 'blue',
+                    data: [],
+                    fill: false
+                }]
+            },
+            options: { responsive: true }
+        });
+
+        const diskChart = new Chart(diskCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Disk Usage (%)',
+                    borderColor: 'green',
+                    data: [],
+                    fill: false
+                }]
+            },
+            options: { responsive: true }
+        });
+
+        const networkChart = new Chart(networkCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Network Activity (Mbps)',
+                    borderColor: 'red',
+                    data: [],
+                    fill: false
+                }]
+            },
+            options: { responsive: true }
+        });
+
+        function getRandomUsage(min, max) {
+            return (Math.random() * (max - min) + min).toFixed(2);
         }
 
-        setInterval(fetchStats, 5000); // Auto-refresh every 5 seconds
-        fetchStats(); // Initial call
-    </script>
+        setInterval(() => {
+            const time = new Date().toLocaleTimeString();
+            
+            if (memoryChart.data.labels.length > 10) {
+                memoryChart.data.labels.shift();
+                memoryChart.data.datasets[0].data.shift();
+            }
 
+            if (diskChart.data.labels.length > 10) {
+                diskChart.data.labels.shift();
+                diskChart.data.datasets[0].data.shift();
+            }
+
+            if (networkChart.data.labels.length > 10) {
+                networkChart.data.labels.shift();
+                networkChart.data.datasets[0].data.shift();
+            }
+
+            memoryChart.data.labels.push(time);
+            memoryChart.data.datasets[0].data.push(getRandomUsage(50, 100));
+            memoryChart.update();
+
+            diskChart.data.labels.push(time);
+            diskChart.data.datasets[0].data.push(getRandomUsage(30, 90));
+            diskChart.update();
+
+            networkChart.data.labels.push(time);
+            networkChart.data.datasets[0].data.push(getRandomUsage(10, 500)); 
+            networkChart.update();
+        }, 3000);
+    </script>
 </body>
 </html>
